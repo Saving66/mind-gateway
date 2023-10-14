@@ -28,7 +28,6 @@ import java.nio.charset.StandardCharsets;
  * @author saving
  */
 
-@Component
 public class AccessFilter implements GlobalFilter, Ordered {
 
     @Resource
