@@ -6,8 +6,8 @@ import com.saving.mind.common.constant.UserInfoConstant;
 import com.saving.mind.common.excpetion.BusinessException;
 import com.saving.mind.common.utils.JwtUtil;
 import com.saving.mind.common.model.TokenInfo;
+import com.saving.mind.common.utils.KeyPairUtil;
 import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.Jwt;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -22,12 +22,17 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.Resource;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
+import java.security.spec.InvalidKeySpecException;
 
 /**
  * @author saving
  */
 
+@Component
 public class AccessFilter implements GlobalFilter, Ordered {
 
     @Resource
@@ -36,36 +41,21 @@ public class AccessFilter implements GlobalFilter, Ordered {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
 
-        ServerHttpResponse response = exchange.getResponse();
         try {
             // 获取请求对象
             ServerHttpRequest request = exchange.getRequest();
 
-            // 从请求头获取Token类型
-            String tokenType = request.getHeaders().getFirst("Token-Type");
-
             // 从请求头中获取Token
             String token = request.getHeaders().getFirst("Authorization");
 
-            if ("Access".equals(tokenType)) {
-                // 对AccessToken进行验证
-                TokenInfo tokenInfo = JwtUtil.extractObject(token, UserInfoConstant.JWT_KEY, TokenInfo.class, UserInfoConstant.USER_ACCESS_TOKEN);
-                Object o = redisTemplate.opsForValue().get(RedisConstant.USER_ACCESS_TOKEN_KEY + tokenInfo.getUserId());
-                if (o == null) {
-                    return onError(exchange, "Token Expired", HttpStatus.UNAUTHORIZED);
-                }
-                exchange.getRequest().mutate().header("X-Custom-User-Id", tokenInfo.getUserId().toString()).build();
-            } else if ("Refresh".equals(tokenType)) {
-                // 对RefreshToken进行验证
-                TokenInfo tokenInfo = JwtUtil.extractObject(token, UserInfoConstant.JWT_KEY, TokenInfo.class, UserInfoConstant.USER_REFRESH_TOKEN);
-                String accessToken = JwtUtil.generateToken(tokenInfo, UserInfoConstant.JWT_KEY, UserInfoConstant.USER_ACCESS_TOKEN_EXPIRED_TIME, UserInfoConstant.USER_ACCESS_TOKEN);
-                DataBuffer buffer = response.bufferFactory().wrap(accessToken.getBytes(StandardCharsets.UTF_8));
-                response.getHeaders().setContentType(MediaType.TEXT_PLAIN);
-                return response.writeWith(Mono.just(buffer));
-            } else {
-                // 无效的Token类型
-                return onError(exchange, "Invalid Token Type", HttpStatus.UNAUTHORIZED);
+            // 对AccessToken进行验证
+            PublicKey publicKey = KeyPairUtil.loadPublicKeyFromFile("/Users/saving/Developer/Java/mind/mind-user/src/main/resources/JwtKey/public_key.pem");
+            TokenInfo tokenInfo = JwtUtil.extractObject(token, publicKey, TokenInfo.class, UserInfoConstant.USER_ACCESS_TOKEN);
+            Object o = redisTemplate.opsForValue().get(RedisConstant.USER_ACCESS_TOKEN_KEY + tokenInfo.getUserId());
+            if (o == null) {
+                return onError(exchange, "Token Expired", HttpStatus.UNAUTHORIZED);
             }
+            exchange.getRequest().mutate().header("X-Custom-User-Id", tokenInfo.getUserId().toString()).build();
         } catch (JsonProcessingException e) {
             // Token解析失败
             return onError(exchange, "Token Parse Error", HttpStatus.UNAUTHORIZED);
@@ -75,8 +65,13 @@ public class AccessFilter implements GlobalFilter, Ordered {
         } catch (BusinessException e) {
             // Token类型不匹配
             return onError(exchange, "Token Type Error", HttpStatus.UNAUTHORIZED);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        } catch (InvalidKeySpecException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-
         return chain.filter(exchange);
     }
 
