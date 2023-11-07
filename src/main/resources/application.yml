@@ -18,10 +18,10 @@ spring:
             - Path=/podcast/** # 路径断言，判断路径是否是以/user开头，如果是则符合
   redis:
     database: 1
-    host: zeabur-gcp-asia-east1-1.clusters.zeabur.com
-    port: 30763
+    host: sfo1.clusters.zeabur.com
+    port: 32237
     timeout: 5000
-    password: B1FU7V9z8L34
+    password: rN6SM4qGZ9L7Xg1B8VdneiY03Kj2s5Wc
 #  zipkin:
 #    base-url: localhost:9412
 #    service:
