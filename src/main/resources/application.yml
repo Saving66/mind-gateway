@@ -4,8 +4,6 @@ spring:
   cloud:
     nacos:
       server-addr: 54.162.69.70:8848
-      discovery:
-        ip: 127.0.0.1
     gateway:
       httpclient:
         connect-timeout: 1000
