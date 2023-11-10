@@ -32,7 +32,6 @@ import java.security.spec.InvalidKeySpecException;
  * @author saving
  */
 
-@Component
 public class AccessFilter implements GlobalFilter, Ordered {
 
     @Resource
@@ -44,10 +43,21 @@ public class AccessFilter implements GlobalFilter, Ordered {
         try {
             // 获取请求对象
             ServerHttpRequest request = exchange.getRequest();
+            String path = request.getURI().getPath();
+
+            // 判断当前路径是否以/auth开头
+            if (path.startsWith("/auth")) {
+                // 如果是以/auth开头，直接执行下一个过滤器
+                return chain.filter(exchange);
+            }
 
             // 从请求头中获取Token
             String token = request.getHeaders().getFirst("Authorization");
-
+            if (token != null && token.startsWith("Bearer ")) {
+                token = token.substring(7);
+            } else {
+                return onError(exchange, "Token Not Found", HttpStatus.UNAUTHORIZED);
+            }
             // 对AccessToken进行验证
             PublicKey publicKey = KeyPairUtil.loadPublicKeyFromFile("/Users/saving/Developer/Java/mind/mind-user/src/main/resources/JwtKey/public_key.pem");
             TokenInfo tokenInfo = JwtUtil.extractObject(token, publicKey, TokenInfo.class, UserInfoConstant.USER_ACCESS_TOKEN);
@@ -55,7 +65,9 @@ public class AccessFilter implements GlobalFilter, Ordered {
             if (o == null) {
                 return onError(exchange, "Token Expired", HttpStatus.UNAUTHORIZED);
             }
-            exchange.getRequest().mutate().header("X-Custom-User-Id", tokenInfo.getUserId().toString()).build();
+            if (!token.equals(o.toString())) {
+                return onError(exchange, "Token Expired", HttpStatus.UNAUTHORIZED);
+            }
         } catch (JsonProcessingException e) {
             // Token解析失败
             return onError(exchange, "Token Parse Error", HttpStatus.UNAUTHORIZED);
