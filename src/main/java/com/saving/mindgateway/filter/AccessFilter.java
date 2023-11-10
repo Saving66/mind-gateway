@@ -59,7 +59,7 @@ public class AccessFilter implements GlobalFilter, Ordered {
                 return onError(exchange, "Token Not Found", HttpStatus.UNAUTHORIZED);
             }
             // 对AccessToken进行验证
-            PublicKey publicKey = KeyPairUtil.loadPublicKeyFromFile("/Users/saving/Developer/Java/mind/mind-user/src/main/resources/JwtKey/public_key.pem");
+            PublicKey publicKey = KeyPairUtil.loadPublicKeyFromFile("JwtKey/public_key.pem");
             TokenInfo tokenInfo = JwtUtil.extractObject(token, publicKey, TokenInfo.class, UserInfoConstant.USER_ACCESS_TOKEN);
             Object o = redisTemplate.opsForValue().get(RedisConstant.USER_ACCESS_TOKEN_KEY + tokenInfo.getUserId());
             if (o == null) {
