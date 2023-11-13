@@ -61,13 +61,19 @@ public class AccessFilter implements GlobalFilter, Ordered {
             // 对AccessToken进行验证
             PublicKey publicKey = KeyPairUtil.loadPublicKeyFromFile("JwtKey/public_key.pem");
             TokenInfo tokenInfo = JwtUtil.extractObject(token, publicKey, TokenInfo.class, UserInfoConstant.USER_ACCESS_TOKEN);
-            Object o = redisTemplate.opsForValue().get(RedisConstant.USER_ACCESS_TOKEN_KEY + tokenInfo.getUserId());
+            Long userId = tokenInfo.getUserId();
+            Object o = redisTemplate.opsForValue().get(RedisConstant.USER_ACCESS_TOKEN_KEY + userId);
             if (o == null) {
                 return onError(exchange, "Token Expired", HttpStatus.UNAUTHORIZED);
             }
             if (!token.equals(o.toString())) {
                 return onError(exchange, "Token Expired", HttpStatus.UNAUTHORIZED);
             }
+            // 将当前用户id存入到Header中，转发给微服务
+            ServerHttpRequest modifiedRequest = request.mutate()
+                    .header("X-USER-ID", userId.toString())
+                    .build();
+            return chain.filter(exchange.mutate().request(modifiedRequest).build());
         } catch (JsonProcessingException e) {
             // Token解析失败
             return onError(exchange, "Token Parse Error", HttpStatus.UNAUTHORIZED);
@@ -84,7 +90,6 @@ public class AccessFilter implements GlobalFilter, Ordered {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        return chain.filter(exchange);
     }
 
     @Override

@@ -1,0 +1,66 @@
+spring:
+  application:
+    name: mind-gateway
+  cloud:
+    nacos:
+      server-addr: 54.162.69.70:8848
+      discovery:
+        ip: 127.0.0.1
+        group: dev
+    gateway:
+      httpclient:
+        connect-timeout: 1000
+        response-timeout: 5s
+      discovery:
+        locator:
+          enabled: false
+      routes:
+        - id: mind-user # 路由标示，必须唯一
+          uri: lb://mind-user # 路由的目标地址
+          predicates: # 路由断言，判断请求是否符合规则
+            - Path=/user/** # 路径断言，判断路径是否是以/user开头，如果是则符合
+        - id: mind-auth
+          uri: lb://mind-user
+          predicates:
+            - Path=/auth/**
+        - id: mind-podcast # 路由标示，必须唯一
+          uri: lb://podcast # 路由的目标地址
+          predicates: # 路由断言，判断请求是否符合规则
+            - Path=/podcast/** # 路径断言，判断路径是否是以/podcast开头，如果是则符合
+      globalcors:
+        corsConfigurations:
+          '[/**]': # 对所有的路由生效
+            allowedOrigins: "http://localhost:3000" # 允许的源地址
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+            allowedHeaders: "*"
+            allowCredentials: true
+  redis:
+    host: sfo1.clusters.zeabur.com
+    port: 32237
+    timeout: 5000
+    password: rN6SM4qGZ9L7Xg1B8VdneiY03Kj2s5Wc
+#  zipkin:
+#    base-url: localhost:9412
+#    service:
+#      name: mind-gateway
+#    enabled: true
+#    sleuth:
+#      sampler:
+#        probability: 1.0
+#      globalcors:
+#        add-to-simple-url-handler-mapping: true
+#        corsConfigurations:
+#          '[/**]':
+#            allowedOrigins: "http://localhost:3000"
+#            allowedMethods:
+#              - GET
+#              - POST
+#              - PUT
+#              - DELETE
+logging:
+  level:
+    root: trace
