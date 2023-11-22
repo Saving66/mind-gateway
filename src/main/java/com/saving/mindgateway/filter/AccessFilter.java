@@ -31,7 +31,7 @@ import java.security.spec.InvalidKeySpecException;
 /**
  * @author saving
  */
-
+@Component
 public class AccessFilter implements GlobalFilter, Ordered {
 
     @Resource
