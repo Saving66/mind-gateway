@@ -6,8 +6,8 @@ spring:
       server-addr: 54.162.69.70:8848
     gateway:
       httpclient:
-        connect-timeout: 1000
-        response-timeout: 5s
+        connect-timeout: 20000
+        response-timeout: 20s
       discovery:
         locator:
           enabled: false
