@@ -53,9 +53,12 @@ public class AccessFilter implements GlobalFilter, Ordered {
 
             // 从请求头中获取Token
             String token = request.getHeaders().getFirst("Authorization");
-            if (token != null && token.startsWith("Bearer ")) {
-                token = token.substring(7);
-            } else {
+//            if (token != null && token.startsWith("Bearer ")) {
+//                token = token.substring(7);
+//            } else {
+//                return onError(exchange, "Token Not Found", HttpStatus.UNAUTHORIZED);
+//            }
+            if (token == null) {
                 return onError(exchange, "Token Not Found", HttpStatus.UNAUTHORIZED);
             }
             // 对AccessToken进行验证
