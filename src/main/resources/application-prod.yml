@@ -40,24 +40,6 @@ spring:
     port: 32237
     timeout: 5000
     password: rN6SM4qGZ9L7Xg1B8VdneiY03Kj2s5Wc
-#  zipkin:
-#    base-url: localhost:9412
-#    service:
-#      name: mind-gateway
-#    enabled: true
-#    sleuth:
-#      sampler:
-#        probability: 1.0
-#      globalcors:
-#        add-to-simple-url-handler-mapping: true
-#        corsConfigurations:
-#          '[/**]':
-#            allowedOrigins: "http://localhost:3000"
-#            allowedMethods:
-#              - GET
-#              - POST
-#              - PUT
-#              - DELETE
 logging:
   level:
     root: trace
